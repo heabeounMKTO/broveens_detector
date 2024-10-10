@@ -1,13 +1,12 @@
+use anyhow::{Error, Result};
 use image::{DynamicImage, ImageBuffer, Rgb};
-use opencv::core::{self,Mat};
+use opencv::core::{self, Mat};
 use opencv::prelude::*;
 use opencv::{
     highgui,
     prelude::*,
     videoio::{self, VideoCapture},
 };
-use anyhow::{Error, Result};
-
 
 pub fn mat_to_dynamic_image(mat: &Mat) -> DynamicImage {
     let rows = mat.rows();
@@ -23,7 +22,6 @@ pub fn mat_to_dynamic_image(mat: &Mat) -> DynamicImage {
     DynamicImage::ImageRgb8(img)
 }
 
-
 pub fn get_webcam_stream(index: i32) -> Result<VideoCapture, Error> {
     let mut cam = videoio::VideoCapture::new(index, videoio::CAP_ANY)?;
     let opened = videoio::VideoCapture::is_opened(&cam)?;
@@ -32,4 +30,3 @@ pub fn get_webcam_stream(index: i32) -> Result<VideoCapture, Error> {
     }
     Ok(cam)
 }
-

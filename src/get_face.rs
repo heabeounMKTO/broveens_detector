@@ -1,11 +1,12 @@
+use crate::bbox::Bbox;
 use anyhow::{Error, Result};
 use clap::Parser;
+use crate::bbox::{non_maximum_suppression};
 use image::{DynamicImage, GenericImageView};
 use std::cmp::Ordering;
 use std::cmp::PartialOrd;
 use tract_ndarray::{s, ArrayBase, Dim, IxDynImpl, OwnedRepr};
 use tract_onnx::prelude::*;
-use crate::bbox::Bbox;
 /// loads model, just panics if anything goes wrong
 /// THATS BY DESIGN
 pub fn load_model(
@@ -72,7 +73,7 @@ fn process_results(
             let x2 = x + w / 2.0;
             let y2 = y + h / 2.0;
             let bbox =
-                Bbox::new(x1, y1, x2, y2, confidence).apply_image_scale(&input_image, 320.0, 320.0);
+            Bbox::new(x1, y1, x2, y2, confidence).apply_image_scale(&input_image, 320.0, 320.0);
             results_vec.push(bbox);
         }
     }
@@ -98,30 +99,3 @@ pub fn get_face(
     Ok(non_maximum_suppression(_final, iou_threshold))
 }
 
-fn non_maximum_suppression(mut boxes: Vec<Bbox>, iou_threshold: f32) -> Vec<Bbox> {
-    boxes.sort_by(|a, b| {
-        a.confidence
-            .partial_cmp(&b.confidence)
-            .unwrap_or(Ordering::Equal)
-    });
-    let mut keep = Vec::new();
-    while !boxes.is_empty() {
-        let current = boxes.remove(0);
-        keep.push(current.clone());
-        boxes.retain(|box_| calculate_iou(&current, box_) <= iou_threshold);
-    }
-
-    keep
-}
-fn calculate_iou(box1: &Bbox, box2: &Bbox) -> f32 {
-    let x1 = box1.x1.max(box2.x1);
-    let y1 = box1.y1.max(box2.y1);
-    let x2 = box1.x2.min(box2.x2);
-    let y2 = box1.y2.min(box2.y2);
-
-    let intersection = (x2 - x1).max(0.0) * (y2 - y1).max(0.0);
-    let area1 = (box1.x2 - box1.x1) * (box1.y2 - box1.y1);
-    let area2 = (box2.x2 - box2.x1) * (box2.y2 - box2.y1);
-    let union = area1 + area2 - intersection;
-    intersection / union
-}

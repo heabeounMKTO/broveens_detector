@@ -1,11 +1,26 @@
-mod cv_utils;
 mod bbox;
+/// notes:
+/// yea bro i know we can `make it proper` and all,
+/// BUT this is a demo , we dont need to make a
+/// "abstract model loader" struct and enums comeon now
+///
+mod cv_utils;
+
+#[cfg(not(feature = "use_ort"))]
 mod get_face;
+
+#[cfg(feature = "use_ort")]
 mod get_face_onnx;
 
 use clap::Parser;
 use cv_utils::{get_webcam_stream, mat_to_dynamic_image};
+
+#[cfg(not(feature = "use_ort"))]
 use get_face::{get_face, load_model, preprocess_image};
+
+#[cfg(feature = "use_ort")]
+use get_face_onnx::{get_face, load_model, preprocess_image};
+
 use opencv::core::{Mat, Point, Rect, Scalar};
 use opencv::prelude::*;
 use opencv::{
@@ -16,8 +31,10 @@ use opencv::{
 use std::time::Instant;
 
 fn main() {
+    // NO ENUM NEEDED
+    // FUCK THEM ENUM KIDS
     let _load = load_model("models/yolov8n_face.onnx");
-    let window = "test_vdo";
+    let window = "broveen_detect";
     highgui::named_window(window, highgui::WINDOW_AUTOSIZE).unwrap();
     let mut WEBCAM = get_webcam_stream(0).unwrap();
     let position = Point::new(10, 30);

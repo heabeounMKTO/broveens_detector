@@ -68,3 +68,33 @@ impl Bbox {
         ))
     }
 }
+
+
+
+pub fn non_maximum_suppression(mut boxes: Vec<Bbox>, iou_threshold: f32) -> Vec<Bbox> {
+    boxes.sort_by(|a, b| {
+        a.confidence
+            .partial_cmp(&b.confidence)
+            .unwrap_or(Ordering::Equal)
+    });
+    let mut keep = Vec::new();
+    while !boxes.is_empty() {
+        let current = boxes.remove(0);
+        keep.push(current.clone());
+        boxes.retain(|box_| calculate_iou(&current, box_) <= iou_threshold);
+    }
+
+    keep
+}
+pub fn calculate_iou(box1: &Bbox, box2: &Bbox) -> f32 {
+    let x1 = box1.x1.max(box2.x1);
+    let y1 = box1.y1.max(box2.y1);
+    let x2 = box1.x2.min(box2.x2);
+    let y2 = box1.y2.min(box2.y2);
+
+    let intersection = (x2 - x1).max(0.0) * (y2 - y1).max(0.0);
+    let area1 = (box1.x2 - box1.x1) * (box1.y2 - box1.y1);
+    let area2 = (box2.x2 - box2.x1) * (box2.y2 - box2.y1);
+    let union = area1 + area2 - intersection;
+    intersection / union
+}
